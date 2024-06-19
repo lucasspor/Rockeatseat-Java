@@ -1,15 +1,16 @@
-FROM ubuntu:lates AS build
+# Primeira etapa: construção
+FROM openjdk:17-jdk AS builder
+WORKDIR /app
 
-RUN apt-get update
-RUN apt-get install openjdk-17-jdk -y
+RUN apt-get update && \
+    apt-get install -y maven
 
 COPY . .
+RUN mvn clean install
 
-RUN apt-get install maven -y
-Run mvn clean install
+# Segunda etapa: imagem final
+FROM openjdk:17-jdk-slim
+EXPOSE 8080
 
-EXPOSE 8080 
-
-COPY --from=build /target/todolist-1.0.0.jar app.jar
-
-ENTRYPOINT ["java", "-jat", "app.jar"]
+COPY --from=builder /app/target/todolist-1.0.0.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
